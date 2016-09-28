@@ -1,0 +1,401 @@
+;condition
+;if
+;格式if judge action e-action
+(if nil (write-line "yes") (write-line "no"))
+
+(let ((a 0))(if a  (write-line "yes") (write-line "no")))
+
+;这样写是错的：(if (5) action e-action)因为编译器没法呈递 5 的运算结果给if，但是(if '(5) action e-action) 是行的，在这里，if得到一个被指定为数据的非空列表。(if( = (+ 1 2) 3) action e-action)也是可以的
+;这是不可以的：(if 5 (print 5)(write-line "no 5")(write-line"haha"))与过程式语言不同，（if，，，）是一个表，在lisp中，解释器试图对一切东西求值，对于列表，解释器会默认第一个元素是个函数名，如果是，就直接把列表中其他东西按顺序一股脑扔进去
+;这样，对于宏if，它只能接受三个东西，所以对于上面的语句，解释器会报错应该写成这样子:
+;这样也是错的：(if nil (print 8)((write-line"no 8")(print 0)))
+;要想一次执行多个动作可以使用progn指令
+(if nil (print 8)(progn(write-line"no 8")(print 0)))
+(if t (progn (write-line"yes")(print 1))())
+;
+;when
+;格式 when judge action1 action2 action3 action4...
+(when(=(+ 3 5) 8)(print 8)(write-line"ok")(write-line"haha")(print 0))
+;一旦条件成立，执行所有作为参数的动作
+;
+;unless
+;格式 unless judge action1 action2 action3 ,,,
+(unless nil (print 0)(write-line"ok")(write-line"haha")(print 1))
+;一旦条件不成立，执行所有作为参数的动作\
+;
+
+;cond
+;cond格式 cond (test action1 action2,,,)(test2 action3 action4,,,),,,
+(
+cond
+(
+(= (+ 3 2) 3)
+(write-line"见了鬼了")
+)
+(
+(=(+ 3 2) 5)
+(write-line"ok")
+(print 5)
+)
+(
+1
+(print 1)
+)
+)
+;注意，一旦有一个条件成立，动作执行完成后，cond将终止
+;故上式子不输出1
+;
+;case
+;case格式: case varb  (value1 action1 action2,,,)(value2 action3 action4),,,(otherwise actionn actionn1,,,)
+(
+let((caset 4))
+(
+case caset
+(
+1
+(print 1)
+(write-line"ok")
+)
+(
+2
+(print 2)
+(write-line"ok")
+)
+(
+3
+(print 3)
+(write-line"ok")
+)
+(
+4
+(print 4)
+(write-line"ok")
+)
+(
+otherwise
+(write-line"完了，没有")
+)
+)
+)
+;最后一个otherwise模块可要可不要
+;
+;condition over
+
+
+					;这里是关于点状列表的，点状列表是一种不正规列表，区别于正规列表（可用下式判断）
+(defun proper-list?(x)
+  (or (null x)
+      (and(consp x)
+	  (proper-list?(cdr x)))))
+					;正规列表存在形式(cons a1 (cons a2 (cons a3 (,,,,,,cons an nil),,,,,,)))其中a可以使原子或者列表，这种情况符合判别式
+					;而点状列表长这样(a.b),看上去和(a b)没什么不同，差一个小点而已，但是，如果用第一种方式（带着一个点）表达第二种（实际上这是一种正统形式，不过为了简化正规列表的输出与输入而
+					;写成简约模式（第二种）），是这样的：
+(a .(b . nil))
+					;由此可见差异，点状列表是不能通过判断式的
+					;可以像下面这样构建一个点状列表
+(cons 'a 'b)
+					;为做对比，这里列出(a b)的构建方式
+(cons 'a (cons 'b nil))
+
+;点阵over
+
+;function
+;全局函数
+(defun hellolisp () (write-line"hello lisp"))
+;定义一个全局函数hellolisp，该函数可以在整个程序的任何列表中使用
+;局部函数,注意小括号的数量
+(flet ((hellolispx()(write-line"hello lisp")))(hellolispx)(hellolisp))
+;在这里，屏幕将输出两条hello lisp
+(hellolisp)
+;这里能够输出hello lisp
+;(hellolispx)这是一行错误代码
+;和声明局部变量相似，能够一次声明多个局部函数
+(flet ((g(n)(print(+ 1 n)))(f(n)(print(+ n 2))))(g 3)(f 4))
+;注意，如果函数参数全部都是原子那么在使用函数时不要用列表形式只包含一个原子的列
+;表！=原子
+;在函数声明中调用其他函数
+(labels ((a(n)(print n))(calla(n)(a n)))(calla 15))
+;注意括号层数
+;在labels包着的列表中的函数声明可以互相调用
+;function over
+
+;function-return
+(defun a-series-of-process()(+ 5 9)(/ 9 4)(* 8 7))
+(defun add-x-and-64()(+ 64 (a-series-of-process)))
+;function return over
+
+
+;hello
+(defun hello ()(write-line"hello world"))
+(write '(hello world))
+(print '(hello world))
+(format t "hello world")
+
+
+(setq x 10)
+;(write-line x)----x不是字符串
+(write x)
+(print x)
+(format t "~2d"x)
+(write (* 2 3))
+(write '(* 2 3))
+;列表前面加一个'表示不对列表求值
+;hello over
+
+;loop
+					;这里是关于循环迭代的语法语句
+					;loop，重复列表内操作直至找到一个return语句
+
+					;(loop
+					;(......)
+					;(......)
+					;(......)
+					;......
+					; (return ......))
+
+(
+ loop for x in '(tom dick harry)
+					;这个我不知道怎么搞得
+      do (format t "~s"x)
+      )
+
+
+
+(loop for x from 9 to 10
+      do (print x)
+      )
+
+					;这个自己看得名输出是9和10
+
+
+					;接下来是do变量
+					;(do (
+					; (1)
+					;  (2)
+					;   (3)
+					;    )
+					;    )
+    
+					;其中，1是变量声明及其初始值和变化公式，1可以有多个选项
+					;2是判别式及返回值（可以为nil）
+					;3是循环主体
+					;下面是一个例子
+(defun do-test (p)
+
+  (do
+   ((x 1 (+ x 1)))
+   ((> x p) nil)
+   (format t "~a ~%"x))
+  )
+
+;loop over
+
+
+; macro 
+(defmacro setTo (num)(setq num 10)(print num))(setq x 100)(print x)(setTo x)(print x)
+;macro over
+
+;sequences
+					;这里是与序列有关的函数
+
+					;序列就是注重顺序的列表
+(print(length '(a b c)))
+					;length返回序列（列表）的元素数目
+(print(length '( a b (c d))))
+					;由上式可见，这个函数返回的是作为参数的列表中所含的东西个数，而不是列表中所含所有元素个数，如果把普通列表称作列表，那么这种函数就是列表函数，而不是树函数
+					;两个式子都输出3
+
+
+(subseq '( a b c d e f) 1 3)
+					;这个函数用于输出列表的一部分，第二个参数是第一个输出元素的位置，第三个元素（可以不填）是最后一个输出元素的位置加一，这里输出为（b c）
+
+
+
+(reverse '( a b c d e f))
+					;这个函数返回一个顺序颠倒的序列
+
+
+(sort '( 4 6 3 9 3 7) #'>)
+					;这个函数接受两个参数，第一个是一个列表，第二个是一个比较函数的格式化输入，然后这个函数使用这个函数为作为参数的列表排序
+;(print(sort '(a c e b g) #'>))
+					;输入上述命令将报错，可见该函数并不能为字母排序
+
+
+
+(every #'oddp '(1 3 5 7))
+					;every接受一个函数的格式化输入和一个列表作为参数（判别式），然后判断这个列表中的所有元素是否都符合该判别式，在这里，列表中所有元素都是奇数，故返回T
+
+
+(some #'oddp '(1 2  4 8))
+					;some接受的参数类型和every一样，当列表中有一个元素满足判别式时，输出T
+
+					;上面这种函数还能接受多个列表，这时判别式从两个序列中按顺序一次取一个元素，如
+(every #'> '(1 3 5) '(0 2 4))
+
+;sequences over
+
+;sets
+					;这里面是和集合操作有关的函数
+(member 'b '( a b c))
+					;member寻找集合中的某元素并返回以该元素开头的cdr（也可以当作真）
+(union '(a b c) '(a b d))
+					;并集
+(intersection '(a b c) '(a d e))
+					;交集
+
+(set-difference '(a b c d e) '(c d e))
+					;补集
+					;注意，由于集合没有顺序概念，因此他们可能会返回次序调换的列表
+
+
+
+(adjoin 'b '(a n d))
+					;adjoin相当于条件式的cons，当列表中没有第一个参数所传递的元素时，就把这个元素加入列表首项
+
+;sets over
+
+
+;stacks
+					;这里边是与栈相关的函数
+
+(setf lst '(b c d))
+(push 'a lst)
+					;即把a放入列表（栈）中,(push obj lst)相当于(setf lst (cons obj lst))
+					;由此可见，push将元素放入列表首项，和入栈相似
+					;下面这种写法会报错，我也不知道为什么
+					;(push 'a '( b c d))
+
+
+
+(setf lst '(a b c d))
+(print(pop lst))
+					;pop把列表中第一个元素提出来，和出栈相似
+					;同理，这种写法也会报错，我也不知道为什么(print(pop '(a b c d)))
+
+
+					;还有一种push宏，但是我认为它那样子不算是入栈
+(let((lst '(a b)))
+  (pushnew 'c lst)
+  (pushnew 'a lst)
+  x
+  )
+					;在这里，输出为（c a b）因为a已经存在了，这种宏使用的是adjoin而不是cons
+
+;stacks over
+
+
+;tree
+
+					;树就是一种列表，一种储存树的列表，这种列表储存同种列表（树）或者普通列表或者元素 例如
+(list '(and ( gaga lily) (haha momous)))
+					;这里建立了一个树
+					;注意 很多操作普通列表的函数不适合用于树，因为这种函数是单层的，而列表可以很多层，例如
+(substitute 'y 'x '( j  x  (x) (y x) d));这里输出一个列表，列表中的x元素被替换为y，但是列表中的列表中的x元素不属于列表中的x元素，因此输出为（j y (x)(y x) d)
+(subst 'y 'x '(j x (x)(y x) d));这里输出为(j y (y)(y y)d)),这个函数是操作树的
+					;下面列出subst函数的相关功能代码以供参考
+(defun our-subst(new old tree)
+  (if(eql tree old)
+      new
+    (if(atom tree)
+	tree
+      (cons(our-subst new old (car tree))(our-subst new old (cdr tree))))))
+
+;tree over
+
+
+;varb
+;局部变量
+(let ((a 0)))
+(let ((a 5)(b 6)))
+;注意括号的数量
+;定义局部变量a b，这两个变量只能在定义其的let所在的列表内有效
+;例如
+(let((c 10)(d 3))(+ c d))
+
+
+;
+(setq x 10)
+
+;全局变量
+(defparameter *x* 20)
+;定义全局变量*x*,其中*必须加，这个变量可以在程序任何地方使用
+(setf *x* 10)
+;改变全局变量*x*为十
+
+;varb over
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
